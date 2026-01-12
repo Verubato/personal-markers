@@ -42,25 +42,30 @@ local width = 50
 local height = 50
 local marks = {}
 
-local function GetOrCreateMarker(unitFrame)
-	local marker = unitFrame.PersonalMarker
+local function GetNameplateAnchor(nameplate)
+	-- nameplate addons hide the UnitFrame but not the nameplate
+	return nameplate.UnitFrame:IsVisible() and nameplate.UnitFrame or nameplate
+end
+
+local function GetOrCreateMarker(nameplate)
+	local marker = nameplate.PersonalMarker
 
 	if marker then
 		return marker
 	end
 
-	marker = unitFrame:CreateTexture(nil, "OVERLAY", nil, 7)
+	marker = nameplate:CreateTexture(nil, "OVERLAY", nil, 7)
 	marker:SetDesaturated(true)
 	marker:Hide()
 
-	unitFrame.PersonalMarker = marker
+	nameplate.PersonalMarker = marker
 	return marker
 end
 
 local function Mark(unit, number)
 	local nameplate = C_NamePlate.GetNamePlateForUnit(unit or "target")
 
-	if not nameplate or not nameplate.UnitFrame then
+	if not nameplate then
 		return
 	end
 
@@ -68,16 +73,17 @@ local function Mark(unit, number)
 		return
 	end
 
-	local marker = GetOrCreateMarker(nameplate.UnitFrame)
-
+	local marker = GetOrCreateMarker(nameplate)
 	local icon = iconList[number]
 
 	if not icon then
 		return
 	end
 
+	local anchor = GetNameplateAnchor(nameplate)
+
 	marker:ClearAllPoints()
-	marker:SetPoint("CENTER", nameplate.UnitFrame, "TOP", 0, 10)
+	marker:SetPoint("CENTER", anchor, "TOP", 0, 10)
 
 	local file = iconPath .. icon.filename
 	marker:SetTexture(file)
@@ -90,8 +96,8 @@ local function Mark(unit, number)
 	-- hide the existing marker if exists
 	local existing = marks[number]
 
-	if existing and existing.UnitFrame and existing.UnitFrame.PersonalMarker then
-		existing.UnitFrame.PersonalMarker:Hide()
+	if existing and existing.PersonalMarker then
+		existing.PersonalMarker:Hide()
 	end
 
 	marks[number] = nameplate
@@ -104,21 +110,17 @@ local function Unmark(unit)
 		return
 	end
 
-	if not targetNameplate.UnitFrame then
+	if not targetNameplate.PersonalMarker then
 		return
 	end
 
-	if not targetNameplate.UnitFrame.PersonalMarker then
-		return
-	end
-
-	targetNameplate.UnitFrame.PersonalMarker:Hide()
+	targetNameplate.PersonalMarker:Hide()
 end
 
 local function UnmarkAll()
 	for _, nameplate in ipairs(C_NamePlate.GetNamePlates()) do
-		if nameplate.UnitFrame and nameplate.UnitFrame.PersonalMarker then
-			nameplate.UnitFrame.PersonalMarker:Hide()
+		if nameplate.PersonalMarker then
+			nameplate.PersonalMarker:Hide()
 		end
 	end
 end
